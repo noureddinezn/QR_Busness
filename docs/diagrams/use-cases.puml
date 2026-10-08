@@ -1,0 +1,95 @@
+@startuml
+left to right direction
+
+actor Visitor
+actor User
+actor Admin
+
+rectangle "Universal QR Platform" {
+    usecase "Register" as UC1
+    usecase "Login" as UC2
+    usecase "Logout" as UC3
+    usecase "Manage Account" as UC4
+
+    usecase "Create Page" as UC5
+    usecase "Edit Page" as UC6
+    usecase "Delete Page" as UC7
+    usecase "Activate / Deactivate Page" as UC8
+    usecase "Customize Theme" as UC9
+    usecase "Upload Logo" as UC10
+
+    usecase "Add Link" as UC11
+    usecase "Edit Link" as UC12
+    usecase "Delete Link" as UC13
+    usecase "Reorder Links" as UC14
+    usecase "Enable / Disable Link" as UC15
+
+    usecase "Preview Page" as UC16
+
+    usecase "Generate Main QR Code" as UC17
+    usecase "Download QR Code" as UC18
+    usecase "Generate Dedicated QR" as UC19
+
+    usecase "View Analytics" as UC20
+
+    usecase "Scan QR Code" as UC21
+    usecase "View Public Profile" as UC22
+    usecase "Open Link" as UC23
+    usecase "Open Google Maps" as UC24
+    usecase "Open WhatsApp" as UC25
+    usecase "Open Google Reviews" as UC26
+
+    usecase "Manage Users" as UC27
+    usecase "Manage Pages" as UC28
+    usecase "Disable User" as UC29
+    usecase "Disable Page" as UC30
+    usecase "View Platform Statistics" as UC31
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+
+User --> UC11
+User --> UC12
+User --> UC13
+User --> UC14
+User --> UC15
+
+User --> UC16
+
+User --> UC17
+User --> UC18
+User --> UC19
+
+User --> UC20
+
+Visitor --> UC21
+Visitor --> UC22
+Visitor --> UC23
+Visitor --> UC24
+Visitor --> UC25
+Visitor --> UC26
+
+UC21 ..> UC22 : <<include>>
+UC22 ..> UC23 : <<extend>>
+UC23 ..> UC24 : <<extend>>
+UC23 ..> UC25 : <<extend>>
+UC23 ..> UC26 : <<extend>>
+
+Admin --> UC2
+Admin --> UC27
+Admin --> UC28
+Admin --> UC29
+Admin --> UC30
+Admin --> UC31
+
+@enduml

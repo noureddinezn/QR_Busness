@@ -1,0 +1,102 @@
+@startuml
+
+class User {
+    - id : bigint
+    - name : string
+    - email : string
+    - password : string
+    - role : string
+    - is_active : boolean
+    - created_at : datetime
+    - updated_at : datetime
+
+    + createPage()
+    + updateProfile()
+    + deactivate()
+}
+
+class Page {
+    - id : bigint
+    - user_id : bigint
+    - title : string
+    - slug : string
+    - bio : text
+    - logo : string
+    - cover_image : string
+    - theme : string
+    - primary_color : string
+    - secondary_color : string
+    - is_active : boolean
+    - created_at : datetime
+    - updated_at : datetime
+
+    + publish()
+    + update()
+    + deactivate()
+}
+
+class Link {
+    - id : bigint
+    - page_id : bigint
+    - type : string
+    - title : string
+    - url : string
+    - icon : string
+    - position : integer
+    - is_active : boolean
+    - created_at : datetime
+    - updated_at : datetime
+
+    + update()
+    + activate()
+    + deactivate()
+    + reorder()
+}
+
+class QrCode {
+    - id : bigint
+    - page_id : bigint
+    - link_id : bigint
+    - type : string
+    - target_url : string
+    - file_path : string
+    - format : string
+    - created_at : datetime
+    - updated_at : datetime
+
+    + generate()
+    + download()
+}
+
+class Scan {
+    - id : bigint
+    - page_id : bigint
+    - ip_address : string
+    - user_agent : string
+    - device : string
+    - browser : string
+    - country : string
+    - scanned_at : datetime
+
+    + record()
+}
+
+class LinkClick {
+    - id : bigint
+    - link_id : bigint
+    - ip_address : string
+    - device : string
+    - browser : string
+    - clicked_at : datetime
+
+    + record()
+}
+
+User "1" -- "0..*" Page : owns
+Page "1" *-- "0..*" Link : contains
+Page "1" -- "0..*" QrCode : generates
+Link "0..1" -- "0..*" QrCode : dedicated QR
+Page "1" -- "0..*" Scan : receives
+Link "1" -- "0..*" LinkClick : receives
+
+@enduml

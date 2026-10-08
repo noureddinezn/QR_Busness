@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QRProfile</title>
+    <style>
+      html, body { margin: 0; background: #f6f7f9; color: #172033; font-family: system-ui, sans-serif; }
+      #boot-status { padding: 48px 20px; text-align: center; }
+      #boot-retry { display: none; margin: 16px auto; padding: 12px 20px; }
+    </style>
+  </head>
+  <body>
+    <div id="app"><div id="boot-status" role="status"><p id="boot-message">Loading profile...</p><button id="boot-retry" onclick="location.reload()">Try again</button></div></div>
+    <noscript>Enable JavaScript to open this profile.</noscript>
+    <script>
+      window.profileBootTimeout = setTimeout(function () {
+        var message = document.getElementById('boot-message');
+        if (message) {
+          message.textContent = 'Unable to load the app. Check your connection and try again.';
+          document.getElementById('boot-retry').style.display = 'block';
+        }
+      }, 15000);
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

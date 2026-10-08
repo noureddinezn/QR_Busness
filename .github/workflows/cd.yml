@@ -142,15 +142,18 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
           BACKEND_IMAGE: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
+
           envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,FRONTEND_IMAGE,BACKEND_IMAGE
+
           script: |
             set -e
 
-            DEPLOY_DIR="$HOME/QR_Business"
+            DEPLOY_DIR="/home/ubuntu/QR_Busness"
 
             if [ ! -d "$DEPLOY_DIR" ]; then
               echo "Deployment directory $DEPLOY_DIR does not exist on VPS."
@@ -159,15 +162,50 @@ jobs:
 
             cd "$DEPLOY_DIR"
 
-            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            echo "Logging in to Docker Hub..."
+            echo "$DOCKERHUB_TOKEN" | docker login \
+              -u "$DOCKERHUB_USERNAME" \
+              --password-stdin
 
-            FRONTEND_IMAGE="$FRONTEND_IMAGE" BACKEND_IMAGE="$BACKEND_IMAGE" docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            FRONTEND_IMAGE="$FRONTEND_IMAGE" BACKEND_IMAGE="$BACKEND_IMAGE" docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            echo "Pulling new Docker images..."
+            FRONTEND_IMAGE="$FRONTEND_IMAGE" \
+            BACKEND_IMAGE="$BACKEND_IMAGE" \
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.prod.yml \
+              pull
 
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan migrate --force
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan config:cache
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan view:cache
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+            echo "Starting updated containers..."
+            FRONTEND_IMAGE="$FRONTEND_IMAGE" \
+            BACKEND_IMAGE="$BACKEND_IMAGE" \
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.prod.yml \
+              up -d
 
+            echo "Running Laravel migrations..."
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.prod.yml \
+              exec -T backend php artisan migrate --force
+
+            echo "Caching Laravel configuration..."
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.prod.yml \
+              exec -T backend php artisan config:cache
+
+            echo "Caching Laravel views..."
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.prod.yml \
+              exec -T backend php artisan view:cache
+
+            echo "Deployment status:"
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.prod.yml \
+              ps
+
+            echo "Cleaning unused Docker images..."
             docker image prune -f
-

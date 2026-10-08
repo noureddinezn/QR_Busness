@@ -3,13 +3,16 @@ services:
     ports: !reset []
 
   backend:
+    build: !reset null
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
       LOG_LEVEL: warning
-    ports: !reset []
+    ports: !override
+      - "${BACKEND_PORT:-8001}:8000"
 
   frontend:
+    build: !reset null
     ports: !override
-      - "${FRONTEND_PORT:-80}:80"
+      - "${FRONTEND_PORT:-8081}:80"
 

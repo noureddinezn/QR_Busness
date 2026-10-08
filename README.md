@@ -221,3 +221,217 @@ FRONTEND_URL=http://YOUR_LOCAL_IP:5173
 ## Current Local Blocker
 
 The code is ready for PostgreSQL, but this computer's local `postgres` user requires a password. `php artisan migrate` currently fails until `DB_PASSWORD` in `backend/.env` is filled in with the correct password or the local PostgreSQL auth rules are changed.
+
+## Docker Setup
+
+The project also includes a Docker setup for the current full-stack application:
+
+```bash
+project-root/
+├── docker-compose.yml
+├── docker-compose.prod.yml
+├── .env.docker.example
+├── frontend/
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   └── nginx.conf
+└── backend/
+    ├── Dockerfile
+    ├── .dockerignore
+    └── docker/entrypoint.sh
+```
+
+Docker runs three services:
+
+- `frontend`: Vue build served by Nginx.
+- `backend`: Laravel API served on port `8000` inside the container.
+- `database`: PostgreSQL 16 with a persistent Docker volume.
+
+Inside Docker, Laravel connects to PostgreSQL with:
+
+```bash
+DB_HOST=database
+DB_PORT=5432
+```
+
+Containers must not use `localhost` to reach each other. The frontend Nginx container proxies browser requests from `/api` and `/storage` to the Laravel backend service.
+
+### Docker Environment
+
+Create a Docker env file from the example:
+
+```bash
+copy .env.docker.example .env
+```
+
+Then generate a Laravel app key on your host:
+
+```bash
+cd backend
+php artisan key:generate --show
+```
+
+Put that value into root `.env`:
+
+```bash
+APP_KEY=base64:PASTE_GENERATED_KEY_HERE
+```
+
+Important Docker variables:
+
+```bash
+FRONTEND_PORT=8080
+BACKEND_PORT=8000
+POSTGRES_PORT=5432
+
+APP_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:8080
+
+VITE_API_URL=/api
+VITE_PUBLIC_APP_URL=http://localhost:8080
+
+POSTGRES_DB=qr_profile
+POSTGRES_USER=qrprofile
+POSTGRES_PASSWORD=change_me
+```
+
+For a server or domain later, update:
+
+```bash
+APP_URL=https://api.yourdomain.com
+FRONTEND_URL=https://yourdomain.com
+VITE_PUBLIC_APP_URL=https://yourdomain.com
+VITE_API_URL=/api
+```
+
+### Build And Run
+
+From the project root:
+
+```bash
+docker compose build
+docker compose up -d
+docker compose ps
+```
+
+Open the app:
+
+```bash
+http://localhost:8080
+```
+
+Check Laravel health through the frontend proxy:
+
+```bash
+http://localhost:8080/api/health
+```
+
+You can also call Laravel directly during local Docker testing:
+
+```bash
+http://localhost:8000/api/health
+```
+
+### Database Migrations
+
+Run migrations inside the backend container:
+
+```bash
+docker compose exec backend php artisan migrate
+```
+
+Seed demo data:
+
+```bash
+docker compose exec backend php artisan db:seed
+```
+
+Create or refresh the storage symlink:
+
+```bash
+docker compose exec backend php artisan storage:link
+```
+
+The backend container does not automatically run migrations on startup. That is intentional so production deployments do not change the database without an explicit command.
+
+### Logs And Debugging
+
+Inspect logs:
+
+```bash
+docker compose logs backend
+docker compose logs frontend
+docker compose logs database
+```
+
+Follow logs live:
+
+```bash
+docker compose logs -f backend
+```
+
+Enter the backend container:
+
+```bash
+docker compose exec backend sh
+```
+
+### Stop Or Rebuild
+
+Stop containers:
+
+```bash
+docker compose down
+```
+
+Stop containers and remove database/storage volumes:
+
+```bash
+docker compose down -v
+```
+
+Rebuild after Dockerfile, dependency, or frontend environment changes:
+
+```bash
+docker compose build --no-cache
+docker compose up -d
+```
+
+For normal source changes:
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+### Production Compose
+
+The optional production override removes public database/backend ports and exposes only the frontend:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+For production, set real secrets in the root `.env` or your server secret manager:
+
+```bash
+APP_ENV=production
+APP_DEBUG=false
+APP_KEY=base64:...
+POSTGRES_PASSWORD=strong_password
+FRONTEND_URL=https://yourdomain.com
+APP_URL=https://api.yourdomain.com
+VITE_PUBLIC_APP_URL=https://yourdomain.com
+```
+
+The current backend image uses `php artisan serve` for the first deployment. The Dockerfile is structured so it can later be upgraded to Nginx + PHP-FPM or FrankenPHP without changing the application code.
+
+### CI/CD Direction
+
+The setup is ready for a later flow like:
+
+```bash
+GitHub -> GitHub Actions -> Docker build -> Docker Hub -> Oracle Cloud VM -> docker compose pull -> docker compose up -d
+```
+
+A future GitHub Actions workflow can build `frontend/Dockerfile` and `backend/Dockerfile`, push both images to Docker Hub, then the Oracle VM can pull those images and run the same Compose architecture.

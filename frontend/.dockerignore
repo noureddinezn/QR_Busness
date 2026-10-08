@@ -1,0 +1,14 @@
+node_modules
+dist
+test-results
+coverage
+.vscode
+.env
+.env.*
+!.env.example
+preview.stdout.log
+preview.stderr.log
+npm-debug.log*
+Dockerfile
+.dockerignore
+
